@@ -149,17 +149,22 @@ class HungryAgent(Agent):
     # Constructor
     #
     #
-    #def __init__(self):
-    #    self.last = Directions.STOP
+    def __init__(self):
+        self.last = Directions.STOP
 
     def getAction(self, state):
 
+        # Get the actions we can try
         legal = api.legalActions(state)
         pacman = api.whereAmI(state)
         theFood = api.food(state)
         nearest = theFood[0]
+        # remove "STOP" action from legal actions
         if Directions.STOP in legal:
             legal.remove(Directions.STOP)
+        # If we can repeat the last action, do it
+        if self.last in legal:
+            return api.makeMove(self.last, legal)
         for i in range(len(theFood)):
             if util.manhattanDistance(pacman, theFood[i]) <= util.manhattanDistance(pacman, nearest):
                 nearest = theFood[i]
@@ -174,27 +179,31 @@ class HungryAgent(Agent):
         if abs(temp[0]) > abs(temp[1]):
             if temp[0] < 0 and Directions.EAST in legal:
                 print "EAST: ", legal
+                #self.last = Directions.EAST # record last action
                 return api.makeMove(Directions.EAST, legal)
             elif temp[0] >= 0 and Directions.WEST in legal:
                 print "WEST: ", legal
+                #self.last = Directions.WEST # record last action
                 return api.makeMove(Directions.WEST, legal)
             else:
                 print "RAND: ", legal
+                #self.last = pick    # record last action
                 return api.makeMove(pick, legal)
 
-        elif abs(temp[0]) <= abs(temp[1]):
+        else:
             if temp[1] < 0 and Directions.NORTH in legal:
                 print "NORTH: ", legal
+                #self.last = Directions.NORTH    # record last action
                 return api.makeMove(Directions.NORTH, legal)
             elif temp[1] >= 0 and Directions.SOUTH in legal:
                 print "SOUTH: ", legal
+                #self.last = Directions.SOUTH    # record last action
                 return api.makeMove(Directions.SOUTH, legal)
             else:
                 print "RAND: ", legal
+                #self.last = pick    # record last action
                 return api.makeMove(pick, legal)
-        else:
-            print "RAND: ", legal
-            return api.makeMove(pick, legal)
+        
 
 # SurvivalAgent
 #
