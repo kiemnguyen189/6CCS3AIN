@@ -178,31 +178,27 @@ class HungryAgent(Agent):
         # Uses difference in coords to determine Direction to travel
         if abs(temp[0]) > abs(temp[1]):
             if temp[0] < 0 and Directions.EAST in legal:
-                print "EAST: ", legal
-                #self.last = Directions.EAST # record last action
+                print "EAST: ", legal, " ", pacman, " ", nearest, " ", util.manhattanDistance(pacman, nearest)
                 return api.makeMove(Directions.EAST, legal)
             elif temp[0] >= 0 and Directions.WEST in legal:
-                print "WEST: ", legal
-                #self.last = Directions.WEST # record last action
+                print "WEST: ", legal, " ", pacman, " ", nearest, " ", util.manhattanDistance(pacman, nearest)
                 return api.makeMove(Directions.WEST, legal)
             else:
-                print "RAND: ", legal
-                #self.last = pick    # record last action
+                print "### RAND: ", legal, " ", pacman, " ", nearest, " ", util.manhattanDistance(pacman, nearest)
                 return api.makeMove(pick, legal)
 
         else:
             if temp[1] < 0 and Directions.NORTH in legal:
-                print "NORTH: ", legal
-                #self.last = Directions.NORTH    # record last action
+                print "NORTH: ", legal, " ", pacman, " ", nearest, " ", util.manhattanDistance(pacman, nearest)
                 return api.makeMove(Directions.NORTH, legal)
             elif temp[1] >= 0 and Directions.SOUTH in legal:
-                print "SOUTH: ", legal
-                #self.last = Directions.SOUTH    # record last action
+                print "SOUTH: ", legal, " ", pacman, " ", nearest, " ", util.manhattanDistance(pacman, nearest)
                 return api.makeMove(Directions.SOUTH, legal)
             else:
-                print "RAND: ", legal
-                #self.last = pick    # record last action
+                print "### RAND: ", legal, " ", pacman, " ", nearest, " ", util.manhattanDistance(pacman, nearest)
                 return api.makeMove(pick, legal)
+
+        
         
 
 # SurvivalAgent
@@ -230,25 +226,127 @@ class SurvivalAgent(Agent):
         xDiff = pacman[0] - nearest[0]
         yDiff = pacman[1] - nearest[1]
         temp = (xDiff, yDiff)
-        #print "PAC: ", pacman
-        #print "NEAR: ", nearest
-        #print "DIFF ", temp 
 
         pick = random.choice(legal)
         
-
-        # Uses difference in coords to determine Direction to travel
-        if abs(temp[0]) > abs(temp[1]):
-            if temp[0] < 0 and Directions.WEST in legal:
-                return api.makeMove(Directions.WEST, legal)
-            elif Directions.EAST in legal:
-                return api.makeMove(Directions.EAST, legal)
-        elif abs(temp[0]) > abs(temp[1]):
-            if temp[1] < 0 and Directions.SOUTH in legal:
-                return api.makeMove(Directions.SOUTH, legal)
-            elif Directions.NORTH in legal:
-                return api.makeMove(Directions.NORTH, legal)
+        if util.manhattanDistance(pacman, nearest) < 4:
+            # Uses difference in coords to determine Direction to travel
+            if abs(temp[0]) > abs(temp[1]):
+                if temp[0] < 0 and Directions.WEST in legal:
+                    return api.makeMove(Directions.WEST, legal)
+                elif temp[0] >= 0 and Directions.EAST in legal:
+                    return api.makeMove(Directions.EAST, legal)
+                else:
+                    return api.makeMove(pick, legal)
+            else:
+                if temp[1] < 0 and Directions.SOUTH in legal:
+                    return api.makeMove(Directions.SOUTH, legal)
+                elif temp[1] >= 0 and Directions.NORTH in legal:
+                    return api.makeMove(Directions.NORTH, legal)
+                else:
+                    return api.makeMove(pick, legal)
         else:
-            print "RAND", pick
-            print legal
             return api.makeMove(pick, legal)
+
+
+# BothAgent
+#
+# Combines both HungryAgent and SurvivalAgent to create a semi-intelligent pacman
+class BothAgent(Agent):
+
+    # Constructor
+    #
+    #
+    def __init__(self):
+        self.last = Directions.STOP
+
+    def getAction(self, state):
+
+        # Get the actions we can try
+        legal = api.legalActions(state)
+        pacman = api.whereAmI(state)
+        theFood = api.food(state)
+        theGhosts = api.ghosts(state)
+        nearestFood = theFood[0]
+        if len(theGhosts) == 0:
+            nearestGhost = (0, 0)
+        else:
+            nearestGhost = theGhosts[0]
+        # remove "STOP" action from legal actions
+        if Directions.STOP in legal:
+            legal.remove(Directions.STOP)
+        # If we can repeat the last action, do it
+        if self.last in legal:
+            return api.makeMove(self.last, legal)
+        for i in range(len(theFood)):
+            if util.manhattanDistance(pacman, theFood[i]) <= util.manhattanDistance(pacman, nearestFood):
+                nearestFood = theFood[i]
+        for i in range(len(theGhosts)):
+            if util.manhattanDistance(pacman, theGhosts[i]) <= util.manhattanDistance(pacman, nearestGhost):
+                nearestGhost = theGhosts[i]
+
+        # Calculate coords of pacman and food to determine Direction
+        xFoodDiff = pacman[0] - nearestFood[0]
+        yFoodDiff = pacman[1] - nearestFood[1]
+        tempFood = (xFoodDiff, yFoodDiff)
+
+        # Calculate coords of pacman and ghosts to determine Direction
+        xGhostDiff = pacman[0] - nearestGhost[0]
+        yGhostDiff = pacman[1] - nearestGhost[1]
+        tempGhost = (xGhostDiff, yGhostDiff)
+
+        pick = random.choice(legal)
+
+        detectionDist = 5
+        
+        # DETECT CLOSE GHOSTS
+        if util.manhattanDistance(pacman, nearestGhost) < detectionDist:
+            # Uses difference in coords to determine Direction to travel
+            if abs(tempGhost[0]) > abs(tempGhost[1]):
+                if tempGhost[0] < 0 and Directions.WEST in legal:
+                    return api.makeMove(Directions.WEST, legal)
+                elif tempGhost[0] >= 0 and Directions.EAST in legal:
+                    return api.makeMove(Directions.EAST, legal)
+                else:
+                    return api.makeMove(pick, legal)
+            else:
+                if tempGhost[1] < 0 and Directions.SOUTH in legal:
+                    return api.makeMove(Directions.SOUTH, legal)
+                elif tempGhost[1] >= 0 and Directions.NORTH in legal:
+                    return api.makeMove(Directions.NORTH, legal)
+                else:
+                    return api.makeMove(pick, legal)
+        else:
+            # FIND FOOD: Uses difference in coords of food to determine Direction to travel
+            if abs(tempFood[0]) > abs(tempFood[1]):
+                if tempFood[0] < 0 and Directions.EAST in legal:
+                    #print "EAST: ", legal, " ", pacman, " ", nearestFood, " ", util.manhattanDistance(pacman, nearestFood)
+                    return api.makeMove(Directions.EAST, legal)
+                elif tempFood[0] >= 0 and Directions.WEST in legal:
+                    #print "WEST: ", legal, " ", pacman, " ", nearestFood, " ", util.manhattanDistance(pacman, nearestFood)
+                    return api.makeMove(Directions.WEST, legal)
+                else:
+                    #print "### RAND: ", legal, " ", pacman, " ", nearestFood, " ", util.manhattanDistance(pacman, nearestFood)
+                    return api.makeMove(pick, legal)
+
+            else:
+                if tempFood[1] < 0 and Directions.NORTH in legal:
+                    #print "NORTH: ", legal, " ", pacman, " ", nearestFood, " ", util.manhattanDistance(pacman, nearestFood)
+                    return api.makeMove(Directions.NORTH, legal)
+                elif tempFood[1] >= 0 and Directions.SOUTH in legal:
+                    #print "SOUTH: ", legal, " ", pacman, " ", nearestFood, " ", util.manhattanDistance(pacman, nearestFood)
+                    return api.makeMove(Directions.SOUTH, legal)
+                else:
+                    #print "### RAND: ", legal, " ", pacman, " ", nearestFood, " ", util.manhattanDistance(pacman, nearestFood)
+                    return api.makeMove(pick, legal)
+
+        
+
+        
+
+        
+
+
+
+        
+        
