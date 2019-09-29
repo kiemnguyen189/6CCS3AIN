@@ -590,7 +590,7 @@ def findDirection(tempEntity, reverse, legality):
     if abs(tempEntity[0]) > abs(tempEntity[1]):
         print "IF"
         if tempEntity[0] < 0 and Directions.EAST in legality:
-            print "EAST"
+            print "EAST"   
             if reverse == True and Directions.WEST in legality:
                 print "TRUE"
                 direc = Directions.WEST
