@@ -693,6 +693,8 @@ class TestAgent(Agent):
         pick = random.choice(legal)
         detectionDist = 5
 
+        #test
+
         if util.manhattanDistance(pacman, nearestGhost) < detectionDist:
             print "AVOID"
             direc = findDirection(tempGhost, True, legal)
