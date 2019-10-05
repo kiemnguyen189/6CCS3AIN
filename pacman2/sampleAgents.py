@@ -578,7 +578,7 @@ def nearFind(pac, theList, nearestEntity):
             nearestEntity = theList[i]
     return nearestEntity
     
-def findDirection(tempEntity, reverse, legality, l3):
+def findDirection(tempEntity, reverse, legality, l1):
 
     print "###########################################"
     print "findDirection entity: ", tempEntity
@@ -587,7 +587,7 @@ def findDirection(tempEntity, reverse, legality, l3):
     direc = Directions.STOP
     pick = random.choice(legality)
 
-    if abs(tempEntity[0]) > abs(tempEntity[1]):
+    if abs(tempEntity[0]) > abs(tempEntity[1]): # HORIZONTAL
         print "IF"
         if tempEntity[0] < 0 and Directions.EAST in legality:
             print "EAST"   
@@ -608,7 +608,7 @@ def findDirection(tempEntity, reverse, legality, l3):
         else:
             print "RANDOM"
             direc = pick
-    else:
+    else:   # VERTICAL
         print "ELSE"
         if tempEntity[1] < 0 and Directions.NORTH in legality:
             print "NORTH"
@@ -630,10 +630,10 @@ def findDirection(tempEntity, reverse, legality, l3):
             print "RANDOM"
             direc = pick
     print "RETURN: ", direc, ", ", legality
-    if len(l3) == 3:
-        l3.pop(0)
-    if len(l3) < 3:
-        l3.append(direc)
+    if len(l1) == 1:
+        l1.pop(0)
+    if len(l1) < 1:
+        l1.append(direc)
     return (direc, legality) 
 
 # TestAgent
@@ -668,6 +668,7 @@ class TestAgent(Agent):
             nearestFood = (9999, 9999)
         else:
             nearestFood = theFood[0]
+        # If list of unvisited corners is empty
         if len(unvisited) == 0:
             nearestCorner = (9999, 9999)
         else:
@@ -697,24 +698,24 @@ class TestAgent(Agent):
         # Random direction from legal directions
         pick = random.choice(legal)
         detectionDist = 5
-        l3 = self.last3
+        l1 = self.last3
         #test
 
         if util.manhattanDistance(pacman, nearestGhost) < detectionDist:
             print "AVOID"
-            direc = findDirection(tempGhost, True, legal, l3)
+            direc = findDirection(tempGhost, True, legal, l1)
             (d, l) = direc
             print "LAST 3: ", self.last3
             return api.makeMove(d, l)
         elif len(theFood) != 0:
             print "FIND FOOD"
-            direc = findDirection(tempFood, False, legal, l3)
+            direc = findDirection(tempFood, False, legal, l1)
             (d, l) = direc
             print "LAST 3: ", self.last3
             return api.makeMove(d, l)
         else:
             print "FIND CORNERS"
-            direc = findDirection(tempCorner, False, legal, l3)
+            direc = findDirection(tempCorner, False, legal, l1)
             (d, l) = direc
             print "LAST 3: ", self.last3
             return api.makeMove(d, l)
