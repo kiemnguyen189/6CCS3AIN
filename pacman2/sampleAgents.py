@@ -579,7 +579,7 @@ def nearFind(pac, theList, nearestEntity):
     return nearestEntity
     
 def findDirection(tempEntity, reverse, legality, l1):
-
+    
     print "###########################################"
     print "findDirection entity: ", tempEntity
     print "findDirection reverse: ", reverse
@@ -720,7 +720,19 @@ class TestAgent(Agent):
             print "LAST 3: ", self.last3
             return api.makeMove(d, l)
 
-        
+class MapBuildingAgent(Agent):
+
+    def __init__(self):
+        self.last = Directions.STOP
+        walls = api.walls(state)
+        final = walls[len(walls) - 1]
+        size = 
+        whole = [for i in range()]
+
+    def getAction(self, state):
+        topRight = api.walls[len(api.walls) - 1]
+        whole = [for i in range()]
+        api.walls(state)
 
     
 
