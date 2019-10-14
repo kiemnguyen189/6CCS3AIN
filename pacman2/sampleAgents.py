@@ -720,19 +720,29 @@ class TestAgent(Agent):
             print "LAST 3: ", self.last3
             return api.makeMove(d, l)
 
+
 class MapBuildingAgent(Agent):
 
     def __init__(self):
         self.last = Directions.STOP
-        walls = api.walls(state)
-        final = walls[len(walls) - 1]
-        size = 
-        whole = [for i in range()]
+
 
     def getAction(self, state):
-        topRight = api.walls[len(api.walls) - 1]
-        whole = [for i in range()]
-        api.walls(state)
+        legal = api.legalActions(state)
+        walls = api.walls(state)
+        finalCell = walls[len(walls) - 1]
+        print "FINAL: ", finalCell
+        whole = []
+        for i in range(finalCell[0]+1):
+            for j in range(finalCell[1]+1):
+                whole.append((i, j))
+                print i, j
+        ##print whole
+        s = set(walls)
+        diff = [x for x in whole if x not in s]
+        ##diff = list(set(whole) - set(walls))
+        print diff
+        return api.makeMove(Directions.STOP, legal)
 
     
 
