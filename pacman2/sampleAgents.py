@@ -570,9 +570,9 @@ class TriAgent(Agent):
 
 def nearFind(pac, theList, nearestEntity):
 
-    print "##################"
-    print "nearFind list: ", theList
-    print "nearFind entity: ", nearestEntity
+    ##print "##################"
+    ##print "nearFind list: ", theList
+    ##print "nearFind entity: ", nearestEntity
     for i in range(len(theList)):
         if util.manhattanDistance(pac, theList[i]) <= util.manhattanDistance(pac, nearestEntity):
             nearestEntity = theList[i]
@@ -581,11 +581,16 @@ def nearFind(pac, theList, nearestEntity):
 def findDirection(tempEntity, reverse, legality, l1):
     
     print "###########################################"
-    print "findDirection entity: ", tempEntity
-    print "findDirection reverse: ", reverse
+    ##print "findDirection entity: ", tempEntity
+    ##print "findDirection reverse: ", reverse
     print "findDirection legality: ", legality
     direc = Directions.STOP
-    pick = random.choice(legality)
+    ##pick = random.choice(legality)
+    print "L1: ", l1
+    ##TODO: Fix reverse pick
+    pick = Directions.REVERSE
+    ##s = set(l1)
+    ##pick = [x for x in legality if x not in s]
 
     if abs(tempEntity[0]) > abs(tempEntity[1]): # HORIZONTAL
         print "IF"
@@ -682,11 +687,11 @@ class TestAgent(Agent):
                     self.visited.append(elem)
                 if elem in unvisited:
                     unvisited.remove(elem)
-        print "nG"
+        ##print "nG"
         nG = nearFind(pacman, theGhosts, nearestGhost)
-        print "nF"
+        ##print "nF"
         nF = nearFind(pacman, theFood, nearestFood)
-        print "nC"
+        ##print "nC"
         nC = nearFind(pacman, unvisited, nearestCorner)
 
         # Calculate coords of pacman and ghosts to determine Direction
@@ -731,12 +736,12 @@ class MapBuildingAgent(Agent):
         legal = api.legalActions(state)
         walls = api.walls(state)
         finalCell = walls[len(walls) - 1]
-        print "FINAL: ", finalCell
+        ##print "FINAL: ", finalCell
         whole = []
         for i in range(finalCell[0]+1):
             for j in range(finalCell[1]+1):
                 whole.append((i, j))
-                print i, j
+                ##print i, j
         ##print whole
         s = set(walls)
         diff = [x for x in whole if x not in s]
