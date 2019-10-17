@@ -588,48 +588,55 @@ def findDirection(tempEntity, reverse, legality, l1):
     ##pick = random.choice(legality)
     print "L1: ", l1
     ##TODO: Fix reverse pick
-    pick = Directions.REVERSE
+    asDir = l1[0]
+    if Directions.REVERSE[asDir] in legality:
+        pick = Directions.REVERSE[asDir]
+        print "PICK 1: ", pick
+    else:
+        pick = random.choice(legality)
+        print "PICK 2: ", pick
+    ##pick = Directions.REVERSE[asDir] in legality
     ##s = set(l1)
     ##pick = [x for x in legality if x not in s]
 
     if abs(tempEntity[0]) > abs(tempEntity[1]): # HORIZONTAL
-        print "IF"
+        ##print "IF"
         if tempEntity[0] < 0 and Directions.EAST in legality:
-            print "EAST"   
+            ##print "EAST"   
             if reverse == True and Directions.WEST in legality:
-                print "TRUE"
+                ##print "TRUE"
                 direc = Directions.WEST
             else:
-                print "FALSE"
+                ##print "FALSE"
                 direc = Directions.EAST
         elif tempEntity[0] >= 0 and Directions.WEST in legality:
-            print "WEST"
+            ##print "WEST"
             if reverse == True and Directions.EAST in legality:
-                print "TRUE"
+                ##print "TRUE"
                 direc = Directions.EAST
             else:
-                print "FALSE"
+                ##print "FALSE"
                 direc = Directions.WEST
         else:
             print "RANDOM"
             direc = pick
     else:   # VERTICAL
-        print "ELSE"
+        ##print "ELSE"
         if tempEntity[1] < 0 and Directions.NORTH in legality:
-            print "NORTH"
+            ##print "NORTH"
             if reverse == True and Directions.SOUTH in legality:
-                print "TRUE"
+                ##print "TRUE"
                 direc = Directions.SOUTH
             else:
-                print "FALSE"
+                ##print "FALSE"
                 direc = Directions.NORTH
         elif tempEntity[1] >= 0 and Directions.SOUTH in legality:
-            print "SOUTH"
+            ##print "SOUTH"
             if reverse == True and Directions.NORTH in legality:
-                print "TRUE"
+                ##print "TRUE"
                 direc = Directions.NORTH
             else:
-                print "FALSE"
+                ##print "FALSE"
                 direc = Directions.SOUTH
         else:
             print "RANDOM"
@@ -648,7 +655,7 @@ class TestAgent(Agent):
 
     def __init__(self):
         self.last = Directions.STOP
-        self.last3 = []
+        self.last3 = [Directions.STOP]
         self.visited = []
 
     def getAction(self, state):
@@ -708,12 +715,14 @@ class TestAgent(Agent):
 
         if util.manhattanDistance(pacman, nearestGhost) < detectionDist:
             print "AVOID"
+            ##legal.remove(l1[0])
             direc = findDirection(tempGhost, True, legal, l1)
             (d, l) = direc
             print "LAST 3: ", self.last3
             return api.makeMove(d, l)
         elif len(theFood) != 0:
             print "FIND FOOD"
+            
             direc = findDirection(tempFood, False, legal, l1)
             (d, l) = direc
             print "LAST 3: ", self.last3
