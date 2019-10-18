@@ -581,20 +581,25 @@ def nearFind(pac, theList, nearestEntity):
 # Returns a direction of an entity relative to pacman
 def pairBearing(pac, entity):
 
+    print pac
+    print entity
     direc = Directions.STOP
     x = pac[0] - entity[0]
     y = pac[1] - entity[1]
     if abs(x) > abs(y):
         if x < 0:
             direc = Directions.EAST
-            print Directions.REVERSE[direc]
+            print "REV east: ", Directions.REVERSE[direc]
         else:
             direc = Directions.WEST
+            print "REV west: ", Directions.REVERSE[direc]
     else:
         if y < 0:
             direc = Directions.SOUTH
+            print "REV south: ", Directions.REVERSE[direc]
         else:
             direc = Directions.NORTH
+            print "REV north: ", Directions.REVERSE[direc]
     return direc
 
 # Makes pacman run away from the nearest ghost
@@ -622,13 +627,13 @@ def runAway(pac, ghost, legality, l1):
 # Returns a direction based on the nearest entity (food / capsule)
 def findDirection(tempEntity, legality, l1):
     
-    print "###########################################"
-    ##print "findDirection entity: ", tempEntity
-    ##print "findDirection reverse: ", reverse
-    print "findDirection legality: ", legality
+    #print "###########################################"
+    #print "findDirection entity: ", tempEntity
+    #print "findDirection reverse: ", reverse
+    #print "findDirection legality: ", legality
     direc = Directions.STOP
-    ##pick = random.choice(legality)
-    print "L1: ", l1
+    #pick = random.choice(legality)
+    #print "L1: ", l1
     ##TODO: Fix reverse pick
     asDir = l1[0]
     if Directions.REVERSE[asDir] in legality:
@@ -637,9 +642,9 @@ def findDirection(tempEntity, legality, l1):
     else:
         pick = random.choice(legality)
         #print "PICK 2: ", pick
-    ##pick = Directions.REVERSE[asDir] in legality
-    ##s = set(l1)
-    ##pick = [x for x in legality if x not in s]
+    #pick = Directions.REVERSE[asDir] in legality
+    #s = set(l1)
+    #pick = [x for x in legality if x not in s]
 
     if abs(tempEntity[0]) > abs(tempEntity[1]): # HORIZONTAL
         ##print "IF"
@@ -732,6 +737,7 @@ class TestAgent(Agent):
         l1 = self.last3
         #test
 
+        # TODO: Change to relative positioning of ghosts to pac instead of absolute coords
         if util.manhattanDistance(pacman, nearestGhost) < detectionDist:
             print "AVOID"
             direc = runAway(pacman, tempGhost, legal, l1)
