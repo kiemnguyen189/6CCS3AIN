@@ -567,7 +567,7 @@ class TriAgent(Agent):
                 else:
                     return api.makeMove(pick, legal)
 
-
+# Finds the nearest entity
 def nearFind(pac, theList, nearestEntity):
 
     ##print "##################"
@@ -578,19 +578,49 @@ def nearFind(pac, theList, nearestEntity):
             nearestEntity = theList[i]
     return nearestEntity
 
-def runAway(ghost, legality, l1):
+# Returns a direction of an entity relative to pacman
+def pairBearing(pac, entity):
 
     direc = Directions.STOP
+    x = pac[0] - entity[0]
+    y = pac[1] - entity[1]
+    if abs(x) > abs(y):
+        if x < 0:
+            direc = Directions.EAST
+            print Directions.REVERSE[direc]
+        else:
+            direc = Directions.WEST
+    else:
+        if y < 0:
+            direc = Directions.SOUTH
+        else:
+            direc = Directions.NORTH
+    return direc
 
-    if abs(ghost[0]) > abs(ghost):  # HORIZONTAL
+# Makes pacman run away from the nearest ghost
+def runAway(pac, ghost, legality, l1):
+
+    direc = Directions.STOP
+    ghostDirec = pairBearing(pac, ghost)
+    print "GHOST: ", ghostDirec
+    if ghostDirec in legality:
+        legality.remove(ghostDirec)
+
+    if abs(ghost[0]) > abs(ghost[1]):  # HORIZONTAL
         if ghost[0] < 0 and Directions.WEST in legality:
             direc = Directions.WEST
         elif ghost[0] <= 0 and Directions.EAST in legality:
             direc = Directions.EAST
-        else:
-            direc = random.choice(legality)
+    else:   # VERTICAL
+        if ghost[1] < 0 and Directions.SOUTH in legality:
+            direc = Directions.SOUTH
+        elif ghost[1] <= 0 and Directions.NORTH in legality:
+            direc = Directions.NORTH
 
-def findDirection(tempEntity, reverse, legality, l1):
+    return (direc, legality)
+
+# Returns a direction based on the nearest entity (food / capsule)
+def findDirection(tempEntity, legality, l1):
     
     print "###########################################"
     ##print "findDirection entity: ", tempEntity
@@ -603,10 +633,10 @@ def findDirection(tempEntity, reverse, legality, l1):
     asDir = l1[0]
     if Directions.REVERSE[asDir] in legality:
         pick = Directions.REVERSE[asDir]
-        print "PICK 1: ", pick
+        #print "PICK 1: ", pick
     else:
         pick = random.choice(legality)
-        print "PICK 2: ", pick
+        #print "PICK 2: ", pick
     ##pick = Directions.REVERSE[asDir] in legality
     ##s = set(l1)
     ##pick = [x for x in legality if x not in s]
@@ -614,42 +644,18 @@ def findDirection(tempEntity, reverse, legality, l1):
     if abs(tempEntity[0]) > abs(tempEntity[1]): # HORIZONTAL
         ##print "IF"
         if tempEntity[0] < 0 and Directions.EAST in legality:
-            ##print "EAST"   
-            if reverse == True and Directions.WEST in legality:
-                ##print "TRUE"
-                direc = Directions.WEST
-            else:
-                ##print "FALSE"
-                direc = Directions.EAST
+            direc = Directions.EAST
         elif tempEntity[0] >= 0 and Directions.WEST in legality:
-            ##print "WEST"
-            if reverse == True and Directions.EAST in legality:
-                ##print "TRUE"
-                direc = Directions.EAST
-            else:
-                ##print "FALSE"
-                direc = Directions.WEST
+            direc = Directions.WEST
         else:
             print "RANDOM"
             direc = pick
     else:   # VERTICAL
         ##print "ELSE"
         if tempEntity[1] < 0 and Directions.NORTH in legality:
-            ##print "NORTH"
-            if reverse == True and Directions.SOUTH in legality:
-                ##print "TRUE"
-                direc = Directions.SOUTH
-            else:
-                ##print "FALSE"
-                direc = Directions.NORTH
+            direc = Directions.NORTH
         elif tempEntity[1] >= 0 and Directions.SOUTH in legality:
-            ##print "SOUTH"
-            if reverse == True and Directions.NORTH in legality:
-                ##print "TRUE"
-                direc = Directions.NORTH
-            else:
-                ##print "FALSE"
-                direc = Directions.SOUTH
+            direc = Directions.SOUTH
         else:
             print "RANDOM"
             direc = pick
@@ -712,7 +718,8 @@ class TestAgent(Agent):
         nF = nearFind(pacman, theFood, nearestFood)
         ##print "nC"
         nC = nearFind(pacman, unvisited, nearestCorner)
-
+        
+        # TODO: Change to use pairBearing method
         # Calculate coords of pacman and ghosts to determine Direction
         tempGhost = (pacman[0] - nG[0], pacman[1] - nG[1])
         # Calculate coords of pacman and food to determine Direction
@@ -727,25 +734,25 @@ class TestAgent(Agent):
 
         if util.manhattanDistance(pacman, nearestGhost) < detectionDist:
             print "AVOID"
-            ##legal.remove(l1[0])
-            print "TGHOST: ", tempGhost
-            direc = findDirection(tempGhost, True, legal, l1)
+            direc = runAway(pacman, tempGhost, legal, l1)
             (d, l) = direc
-            print "LAST 3: ", self.last3
+            #print "LAST 3: ", self.last3
             return api.makeMove(d, l)
         elif len(theFood) != 0:
             print "FIND FOOD"
             
-            direc = findDirection(tempFood, False, legal, l1)
+            direc = findDirection(tempFood, legal, l1)
             (d, l) = direc
-            print "LAST 3: ", self.last3
+            #print "LAST 3: ", self.last3
             return api.makeMove(d, l)
-        else:
+        elif len(theFood) == 0:
             print "FIND CORNERS"
-            direc = findDirection(tempCorner, False, legal, l1)
+            direc = findDirection(tempCorner, legal, l1)
             (d, l) = direc
-            print "LAST 3: ", self.last3
+            #print "LAST 3: ", self.last3
             return api.makeMove(d, l)
+        
+
 
 
 class MapBuildingAgent(Agent):
