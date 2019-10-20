@@ -613,21 +613,9 @@ def runAway(pac, ghost, legality, l1):
         print "removed: ", ghostDirec
         legality.remove(ghostDirec)
 
-    """
-    if abs(ghost[0]) > abs(ghost[1]):  # HORIZONTAL
-        if ghost[0] < 0 and Directions.WEST in legality:
-            direc = Directions.WEST
-        elif ghost[0] <= 0 and Directions.EAST in legality:
-            direc = Directions.EAST
-    else:   # VERTICAL
-        if ghost[1] < 0 and Directions.SOUTH in legality:
-            direc = Directions.SOUTH
-        elif ghost[1] <= 0 and Directions.NORTH in legality:
-            direc = Directions.NORTH
-    """
-
     return (legality[0], legality)
 
+#TODO: Create a waypoint system / A star
 # Returns a direction based on the nearest entity (food / capsule)
 def findDirection(tempEntity, legality, l1):
     
@@ -638,13 +626,12 @@ def findDirection(tempEntity, legality, l1):
     direc = Directions.STOP
     #pick = random.choice(legality)
     #print "L1: ", l1
-    ##TODO: Fix reverse pick
-    asDir = l1[0]
-    if Directions.REVERSE[asDir] in legality:
-        pick = Directions.REVERSE[asDir]
+    #asDir = l1[0]
+    #if Directions.REVERSE[asDir] in legality:
+        #pick = Directions.REVERSE[asDir]
         #print "PICK 1: ", pick
-    else:
-        pick = random.choice(legality)
+    #else:
+        #pick = random.choice(legality)
         #print "PICK 2: ", pick
     #pick = Directions.REVERSE[asDir] in legality
     #s = set(l1)
@@ -658,7 +645,7 @@ def findDirection(tempEntity, legality, l1):
             direc = Directions.WEST
         else:
             #print "RANDOM"
-            direc = pick
+            direc = random.choice(legality)
     else:   # VERTICAL
         ##print "ELSE"
         if tempEntity[1] < 0 and Directions.NORTH in legality:
@@ -667,7 +654,7 @@ def findDirection(tempEntity, legality, l1):
             direc = Directions.SOUTH
         else:
             #print "RANDOM"
-            direc = pick
+            direc = random.choice(legality)
     #print "RETURN: ", direc, ", ", legality
     if len(l1) == 1:
         l1.pop(0)
