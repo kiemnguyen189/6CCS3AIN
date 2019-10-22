@@ -119,3 +119,4 @@ class SensingAgent(Agent):
         # getAction has to return a move. Here we pass "STOP" to the
         # API to ask Pacman to stay where they are.
         return api.makeMove(Directions.STOP, legal)
+
