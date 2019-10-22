@@ -624,18 +624,6 @@ def findDirection(tempEntity, legality, l1):
     #print "findDirection reverse: ", reverse
     #print "findDirection legality: ", legality
     direc = Directions.STOP
-    #pick = random.choice(legality)
-    #print "L1: ", l1
-    #asDir = l1[0]
-    #if Directions.REVERSE[asDir] in legality:
-        #pick = Directions.REVERSE[asDir]
-        #print "PICK 1: ", pick
-    #else:
-        #pick = random.choice(legality)
-        #print "PICK 2: ", pick
-    #pick = Directions.REVERSE[asDir] in legality
-    #s = set(l1)
-    #pick = [x for x in legality if x not in s]
 
     if abs(tempEntity[0]) > abs(tempEntity[1]): # HORIZONTAL
         ##print "IF"
@@ -661,6 +649,9 @@ def findDirection(tempEntity, legality, l1):
     if len(l1) < 1:
         l1.append(direc)
     return (direc, legality) 
+
+def waypoints():
+    
 
 # TestAgent
 #
@@ -768,22 +759,8 @@ class MapBuildingAgent(Agent):
                 whole.append((i, j))
                 ##print i, j
         ##print whole
-        s = set(walls)
-        diff = [x for x in whole if x not in s]
+        diff = [x for x in whole if x not in set(walls)]
         ##diff = list(set(whole) - set(walls))
         print diff
         return api.makeMove(Directions.STOP, legal)
 
-    
-
-"""
-# QuadAgent
-#
-# Combines: Ghost avoidance, food finding, corner seeking, capsule usage
-class QuadAgent(Agent):
-
-    def __init__(self):
-        self.last = Directions.STOP
-
-    def getAction(self, state):
-"""
