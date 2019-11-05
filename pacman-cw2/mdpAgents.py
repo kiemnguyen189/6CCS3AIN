@@ -37,6 +37,15 @@ import util
 
 class MDPAgent(Agent):
 
+    direcProb = 0.8
+    emptyReward = -0.04
+    foodReward = 1
+    capsuleReward = 1
+    ghostReward = -1
+    discountFactor = 1
+    diff = []
+    dictMap = {}
+
     # Constructor: this gets run when we first invoke pacman.py
     def __init__(self):
         print "Starting up MDPAgent!"
@@ -56,11 +65,14 @@ class MDPAgent(Agent):
                 whole.append((i, j))
         diff = [x for x in whole if x not in set(walls)]
         print diff
+        dictMap = { i : 0 for i in diff }
+        print dictMap
         # find all food and capsules to set rewards 1 and -1 respectively
         wallGrid = state.getWalls()
         foodGrid = state.getFood()
-        for j in range(diff):
-            if j = 
+        #for j in range(diff):
+          #  if j = 
+        #print Directions.LEFT[Directions.NORTH]
 
         
     # This is what gets run in between multiple games
@@ -73,12 +85,40 @@ class MDPAgent(Agent):
         legal = api.legalActions(state)
         if Directions.STOP in legal:
             legal.remove(Directions.STOP)
-        # Random choice between the legal options.
+
+        # use bellman equation for utilities to calculate util of each square
+        #for i, j in dictMap.items():
+         #   tempUtil = 0
+
+            
+
+
         
+        # Random choice between the legal options.
         return api.makeMove(random.choice(legal), legal)
 
+    # find adjacent coords or current using LEFT and RIGHT
+    # returns list of 3 adjacent coords
+    def findAdjacent(coord, curDir):
+        coordDir = {UP:(1,0), RIGHT:(0,1), LEFT(0,-1)}
+        up = coord[0] + coordDir[UP][0]
+        right = coord[1] + coordDir[RIGHT][1]
+        left = coord[1] + coordDir[LEFT][1]
+        actionSum = (0.8*up)+(0.1*right)+(0.1*left)
 
-    #def bellman():
+        coords = []
+        coords.insert(coord)
+        return coords
+
+    # takes in reward, discount factor and dictionary of utilities
+    def bellman(reward, discount, dict):
+        actionProbs = []
+        for i, j in dict.items():
+
+        # TODO: finish direction utilities (up, left, down, right) and
+        # TODO: times probs (0.8, 0.1, 0.1) for each [12 total]
+        maxSum = max()
+        ret = reward + (discount * maxSum)
 
 
 
