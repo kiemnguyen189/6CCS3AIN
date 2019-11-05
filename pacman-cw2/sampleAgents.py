@@ -120,6 +120,17 @@ class SensingAgent(Agent):
         # API to ask Pacman to stay where they are.
         return api.makeMove(Directions.STOP, legal)
 
+# Finds the nearest entity
+def nearFind(pac, theList, nearestEntity):
+
+    ##print "##################"
+    ##print "nearFind list: ", theList
+    ##print "nearFind entity: ", nearestEntity
+    for i in range(len(theList)):
+        if util.manhattanDistance(pac, theList[i]) <= util.manhattanDistance(pac, nearestEntity):
+            nearestEntity = theList[i]
+    return nearestEntity
+
 # Returns a direction of an entity relative to pacman
 def pairBearing(pac, entity):
 
@@ -192,7 +203,7 @@ def findDirection(tempEntity, legality, l1):
         l1.append(direc)
     return (direc, legality) 
 
-def waypoints():
+#def waypoints():
     
 
 # TestAgent

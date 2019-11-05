@@ -48,6 +48,20 @@ class MDPAgent(Agent):
         print "Running registerInitialState for MDPAgent!"
         print "I'm at:"
         print api.whereAmI(state)
+        walls = api.walls(state)
+        finalCell = walls[len(walls) - 1]
+        whole = []
+        for i in range(finalCell[0]+1):
+            for j in range(finalCell[1]+1):
+                whole.append((i, j))
+        diff = [x for x in whole if x not in set(walls)]
+        print diff
+        # find all food and capsules to set rewards 1 and -1 respectively
+        wallGrid = state.getWalls()
+        foodGrid = state.getFood()
+        for j in range(diff):
+            if j = 
+
         
     # This is what gets run in between multiple games
     def final(self, state):
@@ -60,4 +74,18 @@ class MDPAgent(Agent):
         if Directions.STOP in legal:
             legal.remove(Directions.STOP)
         # Random choice between the legal options.
+        
         return api.makeMove(random.choice(legal), legal)
+
+
+    #def bellman():
+
+
+
+    #def MDP():
+
+
+
+    #def valueIteration(self, state):
+
+        #for 
