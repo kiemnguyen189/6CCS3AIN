@@ -39,7 +39,7 @@ class MDPAgent(Agent):
 
     # Constructor: this gets run when we first invoke pacman.py
     def __init__(self):
-        print "Starting up MDPAgent!"
+        # print "Starting up MDPAgent!"
         name = "Pacman"
         self.direcProb = 0.8
         self.emptyReward = -0.04
@@ -51,34 +51,35 @@ class MDPAgent(Agent):
     # Gets run after an MDPAgent object is created and once there is
     # game state to access.
     def registerInitialState(self, state):
-        print "Running registerInitialState for MDPAgent!"
-        print "I'm at:"
-        print api.whereAmI(state)
+        # print "Running registerInitialState for MDPAgent!"
+        # print "I'm at:"
+        # print api.whereAmI(state)
 
         map = self.pathMap(state)
-        #print map
+        ## print map
         map1 = self.wholeMap(state)
-        #print map1
+        ## print map1
         dictMap = self.mapValues(state, map1)
-        print dictMap
+        # print "INIT dictMap: ", dictMap
         
 
     # Returns a dictionary mapping of the whole map
     def wholeMap(self, state):
         walls = api.walls(state)
         last = walls[-1]
-        print last
+        ## print last
         whole = []
         for i in range(last[0]+1):
             for j in range(last[1]+1):
                 whole.append((i, j))
+        print len(whole)
         return whole
         
 
     # Find all non-wall spaces
     def pathMap(self, state):
         walls = api.walls(state)
-        print walls
+        ## print walls
         finalCell = walls[-1]
         whole = []
         for i in range(finalCell[0]+1):
@@ -116,66 +117,91 @@ class MDPAgent(Agent):
             legal.remove(Directions.STOP)
 
         map1 = self.wholeMap(state)
-        #print map1
+        #map1 = self.pathMap(state)
+        ## print map1
         dictMap = self.mapValues(state, map1)
-        #print dictMap
+        # print "NEW dictMap: ", dictMap
         self.valueIteration(state, -0.04, 1, dictMap)
-        
+        #print sorted(dictMap.iteritems())
+        direc = self.getPolicy(self, state, dictMap)
         # Random choice between the legal options.
-        return api.makeMove(random.choice(legal), legal)
+        print "TEST"
+        return api.makeMove(direc, legal)
 
     
     # find adjacent coords of current
     # returns list of 3 adjacent coords
     def findAdjacent(self, state, coord, dictMap):
+        # print "findAdjacent" + "-" * 100
+        # print "coord: ", coord
+        # print "dictMap: ", dictMap
+
         walls = api.walls(state)
         # Dictionary of utilities in each direction
-        self.utilityDict = {"NORTH": 0.0, "SOUTH": 0.0, "EAST": 0.0, "WEST": 0.0}
-        self.dictMap = dictMap
-        self.coord = coord
+        self.utilityDict = {Directions.NORTH: 0.0, Directions.SOUTH: 0.0, Directions.EAST: 0.0, Directions.WEST: 0.0}
+        #self.dictMap = dictMap
+        #self.coord = coord
 
         # adjacent coords in directions
-        self.utilityDict["NORTH"] = self.setUtil(state, "NORTH", coord, walls, dictMap)
-        self.utilityDict["SOUTH"] = self.setUtil(state, "SOUTH", coord, walls, dictMap)
-        self.utilityDict["EAST"] = self.setUtil(state, "EAST", coord, walls, dictMap)
-        self.utilityDict["WEST"] = self.setUtil(state, "WEST", coord, walls, dictMap)
+        self.utilityDict[Directions.NORTH] = self.setUtil(state, Directions.NORTH, coord, walls, dictMap)
+        self.utilityDict[Directions.SOUTH] = self.setUtil(state, Directions.SOUTH, coord, walls, dictMap)
+        self.utilityDict[Directions.EAST] = self.setUtil(state, Directions.EAST, coord, walls, dictMap)
+        self.utilityDict[Directions.WEST] = self.setUtil(state, Directions.WEST, coord, walls, dictMap)
 
-        self.dictMap[coord] = max(self.utilityDict.values())
+        dictMap[coord] = max(self.utilityDict.values())
 
-        print self.utilityDict
-        return self.dictMap[coord]
+        # print self.utilityDict
+        return dictMap[coord]
     
-    #
-    def setUtil(self, state, dir, coord, walls, dictMap):
-        current = (self.coord[0], self.coord[1])
-        north = (self.coord[0], self.coord[1] + 1)
-        south = (self.coord[0], self.coord[1] - 1)
-        east = (self.coord[0] + 1, self.coord[1])
-        west = (self.coord[0] - 1, self.coord[1])
+    # Called 4 times, 1 for each direction
+    def setUtil(self, state, direc, coord, walls, dictMap):
+        # print "setUtil" + "-" * 100
+        # print "direc: ", direc
+        # print "coord: ", coord
+        ## print "walls: ", walls
+        # print "dictMap: ", dictMap
 
-        dirDict = {"NORTH": north, "SOUTH": south, "EAST": east, "WEST": west}
+        current = (coord[0], coord[1])
+        north = (coord[0], coord[1] + 1)
+        south = (coord[0], coord[1] - 1)
+        east = (coord[0] + 1, coord[1])
+        west = (coord[0] - 1, coord[1])
 
-        util = 0.0
+        dirDict = {Directions.NORTH: north, Directions.SOUTH: south, Directions.EAST: east, Directions.WEST: west}
 
-        # If direction (dir) not a wall,
+        #util = 0.0
+
+        # If direction (direc) not a wall,
         # multiply direction Prob with utility
         # otherwise stay in place (current)
-        if dictMap[dirDict[dir]] not in walls:
-            util = (self.direcProb * dictMap[dirDict[dir]])
+        if dictMap[dirDict[direc]] not in walls:
+            # print "if 1: ", dictMap[dirDict[direc]]
+            util = (self.direcProb * dictMap[dirDict[direc]])
+            # print "if util 1: ", util
         else:
+            # print "else 1: ", dictMap[dirDict[current]]
             util = (self.direcProb * dictMap[dirDict[current]])
+            # print "else util 1: ", util
 
-        #
-        if dictMap[Directions.LEFT[dir]] not in walls:
-            util += (((1 - self.direcProb)/2) * dictMap[Directions.LEFT[dir]])
+        # LEFT 
+        if dictMap[dirDict[Directions.LEFT[direc]]] not in walls:
+            # print "if 2: ", dictMap[dirDict[Directions.LEFT[direc]]]
+            util += (((1 - self.direcProb)/2) * dictMap[dirDict[Directions.LEFT[direc]]])
+            # print "util 2: ", util
         else:
+            # print "else 2: ", dictMap[dirDict[current]]
             util += (((1 - self.direcProb)/2) * dictMap[dirDict[current]])
+            # print "else util 1: ", util
 
-        #
-        if dictMap[Directions.RIGHT[dir]] not in walls:
-            util += (((1 - self.direcProb)/2) * dictMap[Directions.LEFT[dir]])
+        # RIGHT
+        if dictMap[dirDict[Directions.RIGHT[direc]]] not in walls:
+            # print "if 3: ", dictMap[dirDict[Directions.RIGHT[direc]]]
+            util += (((1 - self.direcProb)/2) * dictMap[dirDict[Directions.LEFT[direc]]])
+            # print "util 3: ", util
         else:
+            # print "else 3: ", dictMap[dirDict[current]]
             util += (((1 - self.direcProb)/2) * dictMap[dirDict[current]])
+            # print "else util 3: ", util
 
         return util
 
@@ -188,13 +214,27 @@ class MDPAgent(Agent):
         walls = api.walls(state)
         last = walls[-1]
 
-        loops = 10
-        while loops > 0:
-            oldMap = dictMap
+        oldMap = None
+        while dictMap != oldMap:
+            oldMap = dictMap.copy()
             for i in self.wholeMap(state):
                 if i not in walls + food + ghosts + capsules:
-                    dictMap[i] = reward + discount * self.findAdjacent(state, i, oldMap)
-            loops -= 1
+                    # print i, "FUCKFUCKFUCKFUCK"
+                    dictMap[i] = reward + (discount * self.findAdjacent(state, i, oldMap))
+                    """
+                    tempDict1 = {}
+                    tempDict2 = {}
+                    for i, j in oldMap:
+                        if i not in walls:
+                            tempDict1[i] = j
+                    for i, j in dictMap:
+                        if i not in walls:
+                            tempDict2[i] = j
+                    print "OLD: ", sorted(tempDict1.iteritems())
+                    print "NEW: ", sorted(tempDict2.iteritems())
+                    """
+                    print "OLD: ", sorted(oldMap.iteritems())
+                    print "NEW: ", sorted(dictMap.iteritems())
 
     #TODO: POSSIBLE to create:
     #TODO: Instead of dictionary with key: coords and value: util, can create
@@ -203,18 +243,30 @@ class MDPAgent(Agent):
     # Utility = map with utils in each state
     # Policy = map with directions in each state
 
-    def getPolicy(self, state, dictMap)
+    # Finds the best direction to move based on the surrounding utilities
+    # Returns a direction
+    def getPolicy(self, state, dictMap):
         pacman = api.whereAmI(state)
-        self.map = dictMap
+        walls = api.walls(state)
 
         x = pacman[0]
         y = pacman[1]
+        coord = (x, y)
 
-        self.utilityDict = {"NORTH": 0.0, "SOUTH": 0.0, "EAST": 0.0, "WEST": 0.0}
-        self.dictMap = dictMap
-        self.coord = coord
+        self.utilityDict = {Directions.NORTH: 0.0, Directions.SOUTH: 0.0, Directions.EAST: 0.0, Directions.WEST: 0.0}
+        self.returnDirec = {}
 
-        self.utilityDict["NORTH"] = self.setUtil(state, "NORTH", coord, walls, dictMap)
-        self.utilityDict["SOUTH"] = self.setUtil(state, "SOUTH", coord, walls, dictMap)
-        self.utilityDict["EAST"] = self.setUtil(state, "EAST", coord, walls, dictMap)
-        self.utilityDict["WEST"] = self.setUtil(state, "WEST", coord, walls, dictMap)
+        self.utilityDict[Directions.NORTH] = self.setUtil(state, Directions.NORTH, coord, walls, dictMap)
+        self.utilityDict[Directions.SOUTH] = self.setUtil(state, Directions.SOUTH, coord, walls, dictMap)
+        self.utilityDict[Directions.EAST] = self.setUtil(state, Directions.EAST, coord, walls, dictMap)
+        self.utilityDict[Directions.WEST] = self.setUtil(state, Directions.WEST, coord, walls, dictMap)
+
+        #direc = None
+        """
+        high = max(self.utilityDict.values())
+        for dir, util in self.utilityDict:
+            if util == high:
+                direc = dir
+        """
+
+        return max(self.utilityDict)
