@@ -196,6 +196,13 @@ class MDPAgent(Agent):
                     dictMap[i] = reward + discount * self.findAdjacent(state, i, oldMap)
             loops -= 1
 
+    #TODO: POSSIBLE to create:
+    #TODO: Instead of dictionary with key: coords and value: util, can create
+    #TODO: list of 3-item lists. Outer list = the whole map
+    #TODO: each inner list has 3 items: 1) coord 2) utility 3) optimum policy direction
+    # Utility = map with utils in each state
+    # Policy = map with directions in each state
+
     def getPolicy(self, state, dictMap)
         pacman = api.whereAmI(state)
         self.map = dictMap
