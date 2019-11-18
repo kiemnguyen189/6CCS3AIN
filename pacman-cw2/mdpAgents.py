@@ -39,8 +39,6 @@ class MDPAgent(Agent):
 
     # Constructor: this gets run when we first invoke pacman.py
     def __init__(self):
-        # print "Starting up MDPAgent!"
-        name = "Pacman"
         # params
         self.direcProb = 0.8
         self.emptyReward = -0.04
@@ -49,9 +47,11 @@ class MDPAgent(Agent):
         self.foodReward = 1
         self.capsuleReward = 1
         self.ghostReward = -1
-        # init lists
+        # Init lists
+        # FIXED
         self.whole = []
         self.walls = []
+        # UPDATED
         self.food = []
         self.capsules = []
         self.ghosts = []
@@ -60,18 +60,41 @@ class MDPAgent(Agent):
     # Gets run after an MDPAgent object is created and once there is
     # game state to access.
     def registerInitialState(self, state):
-        # print "Running registerInitialState for MDPAgent!"
-        # print "I'm at:"
-        # print api.whereAmI(state)
+        # Lists that stay constant throughout program initialised once
         self.walls = api.walls(state)
         self.whole = self.wholeMap(state)
-        
-    # Returns a list of the whole map
+    
+    # This is what gets run in between multiple games
+    def final(self, state):
+        print "Looks like the game just ended!"
+
+    # Gets pacman to make a move
+    # Updates values of states at every call
+    # Calls value iteration after mapping
+    # Returns: A direction to move in (with 80% success) 
+    def getAction(self, state):
+        # Get the actions we can try, and remove "STOP" if that is one of them.
+        legal = api.legalActions(state)
+        if Directions.STOP in legal:
+            legal.remove(Directions.STOP)
+        # Updates new list of entities with new game state
+        self.food = api.food(state)
+        self.capsules = api.capsules(state)
+        self.ghosts = api.ghosts(state)
+        pac = api.whereAmI(state)
+        # Updates map with new info e.g. eaten food / capsules / ghosts
+        dictMap = self.mapValues(state, self.whole)
+        # Converges the mapped values from mapValues
+        self.valueIteration(state, self.emptyReward, self.discountFactor, dictMap)
+        # Makes a move by calling findMax function that returns the best direction to move
+        return api.makeMove(self.findMax(state, pac, dictMap)[0], legal)
+
+    # Returns a list of tuples that are coordinates of the whole map 
+    # Called once at init
     def wholeMap(self, state):
-        last = self.walls[-1]
         ret = []
-        for i in range(last[0]+1):
-            for j in range(last[1]+1):
+        for i in range(self.walls[-1][0] + 1):
+            for j in range(self.walls[-1][1] + 1):
                 ret.append((i, j))
         return ret
 
@@ -85,34 +108,12 @@ class MDPAgent(Agent):
             elif i in self.walls: dictMap[i] = 0
             else: dictMap[i] = 0
         return dictMap
-
-    # This is what gets run in between multiple games
-    def final(self, state):
-        print "Looks like the game just ended!"
-
-    # MDP 
-    def getAction(self, state):
-        # Get the actions we can try, and remove "STOP" if that is one of them.
-        legal = api.legalActions(state)
-        if Directions.STOP in legal:
-            legal.remove(Directions.STOP)
-        # Updates new list of entities
-        self.food = api.food(state)
-        self.capsules = api.capsules(state)
-        self.ghosts = api.ghosts(state)
-        pac = api.whereAmI(state)
-        # Updates map with new info e.g. eaten food / capsules / ghosts
-        dictMap = self.mapValues(state, self.whole)
-        self.valueIteration(state, self.emptyReward, self.discountFactor, dictMap)
-        return api.makeMove(self.findMax(state, pac, dictMap)[0], legal)
     
     # Find adjacent coords of current
-    # Returns max util of states
+    # Returns max util of states using the Bellman equation
     def findMax(self, state, coord, dictMap):
-
         # Dictionary of utilities in each direction
         utilityDict = {Directions.NORTH: 0.0, Directions.SOUTH: 0.0, Directions.EAST: 0.0, Directions.WEST: 0.0}
-
         # adjacent coords in directions
         utilityDict[Directions.NORTH] = self.setUtil(state, Directions.NORTH, coord, dictMap)
         utilityDict[Directions.SOUTH] = self.setUtil(state, Directions.SOUTH, coord, dictMap)
@@ -121,44 +122,44 @@ class MDPAgent(Agent):
 
         return max(utilityDict.iteritems(), key = lambda x: x[1])
     
-    # Called 4 times, 1 for each direction
+    # Called 4 times in findMax, 1 for each direction
+    # Sums up the utility of each of the 4 directions by calculating
+    # front, left and right probabilities
     def setUtil(self, state, direc, coord, dictMap):
-        
-        current = (coord[0], coord[1])
-        north = (coord[0], coord[1] + 1)
-        south = (coord[0], coord[1] - 1)
-        east = (coord[0] + 1, coord[1])
-        west = (coord[0] - 1, coord[1])
-
-        dirDict = {Directions.NORTH: north, Directions.SOUTH: south, Directions.EAST: east, Directions.WEST: west}
+        # Dictionary mapping direction parameter to actual coordinate locations around it
+        dirDict = {
+            Directions.NORTH: (coord[0], coord[1] + 1), 
+            Directions.SOUTH: (coord[0], coord[1] - 1), 
+            Directions.EAST: (coord[0] + 1, coord[1]), 
+            Directions.WEST: (coord[0] - 1, coord[1]),
+        }
 
         # If direction (direc) not a wall,
-        # multiply direction Prob with utility
-        # otherwise stay in place (current)
+        # multiply direction probability with utility
+        # otherwise stay in place (coord)
         if dirDict[direc] not in self.walls:
             util = (self.direcProb * dictMap[dirDict[direc]])
         else:
-            util = (self.direcProb * dictMap[current])
+            util = (self.direcProb * dictMap[coord])
         # LEFT 
         if dirDict[Directions.LEFT[direc]] not in self.walls:
             util += (((1 - self.direcProb)/2) * dictMap[dirDict[Directions.LEFT[direc]]])
         else:
-            util += (((1 - self.direcProb)/2) * dictMap[current])
+            util += (((1 - self.direcProb)/2) * dictMap[coord])
         # RIGHT
         if dirDict[Directions.RIGHT[direc]] not in self.walls:
             util += (((1 - self.direcProb)/2) * dictMap[dirDict[Directions.RIGHT[direc]]])
         else:
-            util += (((1 - self.direcProb)/2) * dictMap[current])
+            util += (((1 - self.direcProb)/2) * dictMap[coord])
 
         return util
 
     # Converges util values performing Bellman update
     def valueIteration(self, state, reward, discount, dictMap):
-
         oldMap = None
         while dictMap != oldMap:
             oldMap = dictMap.copy()
-            for i in self.wholeMap(state):
+            for i in self.whole:
                 if i not in self.walls + self.food + self.ghosts + self.capsules:
                     dictMap[i] = reward + (discount * self.findMax(state, i, oldMap)[1])
         #print "NEW: ", sorted(dictMap.iteritems())
