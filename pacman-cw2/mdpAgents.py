@@ -81,12 +81,21 @@ class MDPAgent(Agent):
         self.food = api.food(state)
         self.capsules = api.capsules(state)
         self.ghosts = api.ghosts(state)
+        
         pac = api.whereAmI(state)
         # Updates map with new info e.g. eaten food / capsules / ghosts
         dictMap = self.mapValues(state, self.whole)
         # Converges the mapped values from mapValues
         self.valueIteration(state, self.emptyReward, self.discountFactor, dictMap)
         # Makes a move by calling findMax function that returns the best direction to move
+        """
+        print "Pac: ", pac
+        gTimes = api.ghostStatesWithTimes(state)
+        for i in gTimes:
+            if i[0] in dictMap:
+                print i[0], ": ", dictMap[i[0]]
+        print "-" * 20
+        """
         return api.makeMove(self.findMax(state, pac, dictMap)[0], legal)
 
     # Returns a list of tuples that are coordinates of the whole map 
@@ -102,9 +111,9 @@ class MDPAgent(Agent):
     def mapValues(self, state, map):
         dictMap = {}
         for i in map:
-            if i in api.food(state): dictMap[i] = self.foodReward
+            if i in api.ghosts(state): dictMap[i] = self.ghostReward
+            elif i in api.food(state): dictMap[i] = self.foodReward
             elif i in api.capsules(state): dictMap[i] = self.capsuleReward
-            elif i in api.ghosts(state): dictMap[i] = self.ghostReward
             elif i in self.walls: dictMap[i] = 0
             else: dictMap[i] = 0
         return dictMap
@@ -131,7 +140,7 @@ class MDPAgent(Agent):
             Directions.NORTH: (coord[0], coord[1] + 1), 
             Directions.SOUTH: (coord[0], coord[1] - 1), 
             Directions.EAST: (coord[0] + 1, coord[1]), 
-            Directions.WEST: (coord[0] - 1, coord[1]),
+            Directions.WEST: (coord[0] - 1, coord[1]), 
         }
 
         # If direction (direc) not a wall,
