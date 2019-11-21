@@ -42,11 +42,11 @@ class MDPAgent(Agent):
         # params
         self.direcProb = 0.8
         self.emptyReward = -0.04
-        self.discountFactor = 1
+        self.discountFactor = 0.5
         # init util values
         self.foodReward = 1
         self.capsuleReward = 1
-        self.ghostReward = -1
+        self.ghostReward = -8
         # Init lists
         # FIXED
         self.whole = []
@@ -172,3 +172,24 @@ class MDPAgent(Agent):
                 if i not in self.walls + self.food + self.ghosts + self.capsules:
                     dictMap[i] = reward + (discount * self.findMax(state, i, oldMap)[1])
         #print "NEW: ", sorted(dictMap.iteritems())
+        self.gridPrint(state, dictMap)
+
+    def gridPrint(self, state, map):
+        #whole = self.wholeMap(state)
+        #map = self.mapValues(state, whole)
+        out = ""
+        for row in reversed(range(self.walls[-1][1]+1)):
+            for col in range(self.walls[-1][0]+1):
+                if (row == 0 and col == 0): out += "[001]"
+                elif (row == 0 and col == 19): out += "[002]"
+                elif (row == 10 and col == 0): out += "[003]"
+                elif (row == 10 and col == 19): out += "[004]"
+                elif (col, row) in self.walls: out += "[###]"
+                elif (col, row) in api.ghosts(state): out += "  X  "
+                elif (col, row) in api.food(state): out += "  .  "
+                elif (col, row) in api.capsules(state): out += "  o  "
+                elif (col, row) == api.whereAmI(state): out += "  @  "
+                else: out += "{: 5.2f}".format(map[(col, row)])
+            out += "\n"
+        print out
+            
