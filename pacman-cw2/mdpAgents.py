@@ -108,9 +108,9 @@ class MDPAgent(Agent):
         return ret
 
     # Creates a dictionary of coordinate - utility value pairs
-    def mapValues(self, state, map):
+    def mapValues(self, state, map1):
         dictMap = {}
-        for i in map:
+        for i in map1:
             if i in api.ghosts(state): dictMap[i] = self.ghostReward
             elif i in api.food(state): dictMap[i] = self.foodReward
             elif i in api.capsules(state): dictMap[i] = self.capsuleReward
@@ -172,11 +172,12 @@ class MDPAgent(Agent):
                 if i not in self.walls + self.food + self.ghosts + self.capsules:
                     dictMap[i] = reward + (discount * self.findMax(state, i, oldMap)[1])
         #print "NEW: ", sorted(dictMap.iteritems())
-        self.gridPrint(state, dictMap)
+        #self.gridPrint(state, dictMap)
+    
+    #def ghostValues(self, state, ):
 
+    # Prints the map in the terminal with utility values in empty spaces
     def gridPrint(self, state, map):
-        #whole = self.wholeMap(state)
-        #map = self.mapValues(state, whole)
         out = ""
         for row in reversed(range(self.walls[-1][1]+1)):
             for col in range(self.walls[-1][0]+1):
