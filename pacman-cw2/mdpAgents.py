@@ -40,24 +40,23 @@ class MDPAgent(Agent):
     # Constructor: this gets run when we first invoke pacman.py
     def __init__(self):
         # params
-        self.direcProb = 0.8
-        self.emptyReward = -0.04
-        self.discountFactor = 0.5
-        self.avoidRadius = 1
+        self.direcProb = 0.8        # Direction probability (80%)
+        self.emptyReward = -0.04    # The 'reward' for moving pacman
+        self.discountFactor = 0.5   # Discount factor
+        self.avoidRadius = 1        # Radius around a ghost that pacman should avoid
         # init util values
-        self.foodReward = 1
-        self.capsuleReward = 1
-        self.ghostReward = -8
+        self.foodReward = 1         # Reward for food
+        self.capsuleReward = 1      # Reward for capsule
+        self.ghostReward = -8       # Reward for ghost
         # Init lists
         # FIXED
-        self.whole = []
-        self.walls = []
+        self.whole = []             # List of coordinates of the whole map
+        self.walls = []             # List of coordinates of walls
         # UPDATED
-        self.food = []
-        self.capsules = []
-        self.ghosts = []
-        self.radiusList = []
-        
+        self.food = []              # List of food pills
+        self.capsules = []          # List of capsules
+        self.ghosts = []            # List of ghosts
+        self.radiusList = []        # List of coordinates within the avoidance radius
 
     # Gets run after an MDPAgent object is created and once there is
     # game state to access.
@@ -90,17 +89,9 @@ class MDPAgent(Agent):
         # Converges the mapped values from mapValues
         self.valueIteration(state, dictMap)
         # Makes a move by calling findMax function that returns the best direction to move
-        """
-        print "Pac: ", pac
-        gTimes = api.ghostStatesWithTimes(state)
-        for i in gTimes:
-            if i[0] in dictMap:
-                print i[0], ": ", dictMap[i[0]]
-        print "-" * 20
-        """
-        print api.legalActions(state)
-        print self.utilityDict
-        print self.findMax(state, pac, dictMap), 
+        #api.legalActions(state)
+        #print self.utilityDict
+        #print self.findMax(state, pac, dictMap), "\n"
         return api.makeMove(self.findMax(state, pac, dictMap)[0], legal)
 
     # Returns a list of tuples that are coordinates of the whole map 
@@ -140,8 +131,6 @@ class MDPAgent(Agent):
             elif i in self.capsules: dictMap[i] = self.capsuleReward
             elif i in self.walls: dictMap[i] = 0
             else: dictMap[i] = self.emptyReward
-        #for j in self.radiusList:
-        #    dictMap[j] = self.ghostReward / 2
         return dictMap
     
     # Find adjacent coords of current
@@ -197,7 +186,7 @@ class MDPAgent(Agent):
             for i in self.whole:
                 if i not in self.walls + self.food + self.ghosts + self.capsules:
                     dictMap[i] = self.emptyReward + (self.discountFactor * self.findMax(state, i, oldMap)[1])
-        self.gridPrint(state, dictMap)
+        #self.gridPrint(state, dictMap)
 
     # Prints the map in the terminal with utility values in empty spaces
     def gridPrint(self, state, map):
@@ -209,8 +198,8 @@ class MDPAgent(Agent):
                 elif (row == 10 and col == 0): out += "[003]"
                 elif (row == 10 and col == 19): out += "[004]"
                 elif (col, row) in self.walls: out += "[###]"
-                #elif (col, row) in api.ghosts(state): out += "  X  "
-                #elif (col, row) in api.food(state): out += "  .  "
+                elif (col, row) in api.ghosts(state): out += "  X  "
+                elif (col, row) in api.food(state): out += "  .  "
                 elif (col, row) in api.capsules(state): out += "  o  "
                 elif (col, row) == api.whereAmI(state): out += "  @  "
                 else: out += "{: 5.2f}".format(map[(col, row)])
