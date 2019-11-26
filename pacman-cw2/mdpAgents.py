@@ -43,6 +43,7 @@ class MDPAgent(Agent):
         self.direcProb = 0.8
         self.emptyReward = -0.04
         self.discountFactor = 0.5
+        self.avoidRadius = 1
         # init util values
         self.foodReward = 1
         self.capsuleReward = 1
@@ -55,6 +56,7 @@ class MDPAgent(Agent):
         self.food = []
         self.capsules = []
         self.ghosts = []
+        self.radiusList = []
         
 
     # Gets run after an MDPAgent object is created and once there is
@@ -81,12 +83,12 @@ class MDPAgent(Agent):
         self.food = api.food(state)
         self.capsules = api.capsules(state)
         self.ghosts = api.ghosts(state)
-        
+        self.ghostRadius(state)
         pac = api.whereAmI(state)
         # Updates map with new info e.g. eaten food / capsules / ghosts
         dictMap = self.mapValues(state, self.whole)
         # Converges the mapped values from mapValues
-        self.valueIteration(state, self.emptyReward, self.discountFactor, dictMap)
+        self.valueIteration(state, dictMap)
         # Makes a move by calling findMax function that returns the best direction to move
         """
         print "Pac: ", pac
@@ -96,6 +98,9 @@ class MDPAgent(Agent):
                 print i[0], ": ", dictMap[i[0]]
         print "-" * 20
         """
+        print api.legalActions(state)
+        print self.utilityDict
+        print self.findMax(state, pac, dictMap), 
         return api.makeMove(self.findMax(state, pac, dictMap)[0], legal)
 
     # Returns a list of tuples that are coordinates of the whole map 
@@ -107,29 +112,50 @@ class MDPAgent(Agent):
                 ret.append((i, j))
         return ret
 
+    # Creates a list of all locations within a certain radius of all ghosts
+    def ghostRadius(self, state):
+        self.radiusList = []
+        for ghost in self.ghosts:
+            for i in range(int(ghost[0]-self.avoidRadius), int(ghost[0]+self.avoidRadius+1)):
+                for j in range(int(ghost[1]-self.avoidRadius), int(ghost[1]+self.avoidRadius+1)):
+                    if (i, j) not in self.walls or not ghost: self.radiusList.append((i, j))
+        #print self.radiusList
+
+    # Updates the utility values of all the ghosts depending on their states
+    def ghostValue(self, state, coord):
+        stateTimes = api.ghostStatesWithTimes(state)
+        util = 0
+        for pair in stateTimes:
+            if pair[1] == 0: util = self.ghostReward
+            else: util = (pair[1] - 20) / 2.5
+        return util
+
     # Creates a dictionary of coordinate - utility value pairs
     def mapValues(self, state, map1):
         dictMap = {}
         for i in map1:
-            if i in api.ghosts(state): dictMap[i] = self.ghostReward
-            elif i in api.food(state): dictMap[i] = self.foodReward
-            elif i in api.capsules(state): dictMap[i] = self.capsuleReward
+            if i in self.ghosts: dictMap[i] = self.ghostValue(state, i) # TODO: use ghostValues here
+            elif i in self.radiusList: dictMap[i] = self.ghostValue(state, i) / 2
+            elif i in self.food: dictMap[i] = self.foodReward
+            elif i in self.capsules: dictMap[i] = self.capsuleReward
             elif i in self.walls: dictMap[i] = 0
-            else: dictMap[i] = 0
+            else: dictMap[i] = self.emptyReward
+        #for j in self.radiusList:
+        #    dictMap[j] = self.ghostReward / 2
         return dictMap
     
     # Find adjacent coords of current
     # Returns max util of states using the Bellman equation
     def findMax(self, state, coord, dictMap):
         # Dictionary of utilities in each direction
-        utilityDict = {Directions.NORTH: 0.0, Directions.SOUTH: 0.0, Directions.EAST: 0.0, Directions.WEST: 0.0}
+        self.utilityDict = {Directions.NORTH: 0.0, Directions.SOUTH: 0.0, Directions.EAST: 0.0, Directions.WEST: 0.0}
         # adjacent coords in directions
-        utilityDict[Directions.NORTH] = self.setUtil(state, Directions.NORTH, coord, dictMap)
-        utilityDict[Directions.SOUTH] = self.setUtil(state, Directions.SOUTH, coord, dictMap)
-        utilityDict[Directions.EAST] = self.setUtil(state, Directions.EAST, coord, dictMap)
-        utilityDict[Directions.WEST] = self.setUtil(state, Directions.WEST, coord, dictMap)
+        self.utilityDict[Directions.NORTH] = self.setUtil(state, Directions.NORTH, coord, dictMap)
+        self.utilityDict[Directions.SOUTH] = self.setUtil(state, Directions.SOUTH, coord, dictMap)
+        self.utilityDict[Directions.EAST] = self.setUtil(state, Directions.EAST, coord, dictMap)
+        self.utilityDict[Directions.WEST] = self.setUtil(state, Directions.WEST, coord, dictMap)
 
-        return max(utilityDict.iteritems(), key = lambda x: x[1])
+        return max(self.utilityDict.iteritems(), key = lambda x: x[1])
     
     # Called 4 times in findMax, 1 for each direction
     # Sums up the utility of each of the 4 directions by calculating
@@ -164,17 +190,14 @@ class MDPAgent(Agent):
         return util
 
     # Converges util values performing Bellman update
-    def valueIteration(self, state, reward, discount, dictMap):
+    def valueIteration(self, state, dictMap):
         oldMap = None
         while dictMap != oldMap:
             oldMap = dictMap.copy()
             for i in self.whole:
                 if i not in self.walls + self.food + self.ghosts + self.capsules:
-                    dictMap[i] = reward + (discount * self.findMax(state, i, oldMap)[1])
-        #print "NEW: ", sorted(dictMap.iteritems())
-        #self.gridPrint(state, dictMap)
-    
-    #def ghostValues(self, state, ):
+                    dictMap[i] = self.emptyReward + (self.discountFactor * self.findMax(state, i, oldMap)[1])
+        self.gridPrint(state, dictMap)
 
     # Prints the map in the terminal with utility values in empty spaces
     def gridPrint(self, state, map):
@@ -186,8 +209,8 @@ class MDPAgent(Agent):
                 elif (row == 10 and col == 0): out += "[003]"
                 elif (row == 10 and col == 19): out += "[004]"
                 elif (col, row) in self.walls: out += "[###]"
-                elif (col, row) in api.ghosts(state): out += "  X  "
-                elif (col, row) in api.food(state): out += "  .  "
+                #elif (col, row) in api.ghosts(state): out += "  X  "
+                #elif (col, row) in api.food(state): out += "  .  "
                 elif (col, row) in api.capsules(state): out += "  o  "
                 elif (col, row) == api.whereAmI(state): out += "  @  "
                 else: out += "{: 5.2f}".format(map[(col, row)])
