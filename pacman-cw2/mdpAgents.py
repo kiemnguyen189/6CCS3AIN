@@ -98,9 +98,9 @@ class MDPAgent(Agent):
                 print i[0], ": ", dictMap[i[0]]
         print "-" * 20
         """
-        print api.legalActions(state)
-        print self.utilityDict
-        print self.findMax(state, pac, dictMap), 
+        #print api.legalActions(state)
+        #print self.utilityDict
+        #print self.findMax(state, pac, dictMap), "\n"
         return api.makeMove(self.findMax(state, pac, dictMap)[0], legal)
 
     # Returns a list of tuples that are coordinates of the whole map 
@@ -197,7 +197,7 @@ class MDPAgent(Agent):
             for i in self.whole:
                 if i not in self.walls + self.food + self.ghosts + self.capsules:
                     dictMap[i] = self.emptyReward + (self.discountFactor * self.findMax(state, i, oldMap)[1])
-        self.gridPrint(state, dictMap)
+        #self.gridPrint(state, dictMap)
 
     # Prints the map in the terminal with utility values in empty spaces
     def gridPrint(self, state, map):
@@ -209,8 +209,8 @@ class MDPAgent(Agent):
                 elif (row == 10 and col == 0): out += "[003]"
                 elif (row == 10 and col == 19): out += "[004]"
                 elif (col, row) in self.walls: out += "[###]"
-                #elif (col, row) in api.ghosts(state): out += "  X  "
-                #elif (col, row) in api.food(state): out += "  .  "
+                elif (col, row) in api.ghosts(state): out += "  X  "
+                elif (col, row) in api.food(state): out += "  .  "
                 elif (col, row) in api.capsules(state): out += "  o  "
                 elif (col, row) == api.whereAmI(state): out += "  @  "
                 else: out += "{: 5.2f}".format(map[(col, row)])
