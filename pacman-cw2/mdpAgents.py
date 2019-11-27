@@ -42,12 +42,12 @@ class MDPAgent(Agent):
         # params
         self.direcProb = 0.8        # Direction probability (80%)
         self.emptyReward = -0.04    # The 'reward' for moving pacman
-        self.discountFactor = 1     # Discount factor
-        self.avoidRadius = 1        # Radius around a ghost that pacman should avoid
+        self.discountFactor = 0.5   # Discount factor
+        self.avoidRadius = 0        # Radius around a ghost that pacman should avoid
         # Rewards
         self.foodReward = 1         # Reward for food
         self.capsuleReward = 1      # Reward for capsule
-        self.ghostReward = -2       # Reward for ghost
+        self.ghostReward = -4       # Reward for ghost
         # Init lists
         # FIXED
         self.whole = []             # List of coordinates of the whole map
@@ -64,6 +64,8 @@ class MDPAgent(Agent):
         # Lists that stay constant throughout program initialized once
         self.walls = api.walls(state)
         self.whole = self.wholeMap()
+        # Avoidance radius of ghosts depends on size of map. Smaller map = smaller radius
+        self.avoidRadius = int((min(self.walls[-1]) - 2) / 4)
 
     # Gets pacman to make a move
     # Updates values of states at every call
@@ -75,7 +77,7 @@ class MDPAgent(Agent):
         if Directions.STOP in legal:
             legal.remove(Directions.STOP)
         # Updates new list of entities with new game state
-        self.food = api.food(state)
+        self.food = api.food(state)         
         self.capsules = api.capsules(state)
         self.ghosts = api.ghosts(state)
         self.stateTimes = api.ghostStatesWithTimes(state)
@@ -84,11 +86,9 @@ class MDPAgent(Agent):
         # Updates map with new info e.g. eaten food / capsules / ghosts
         dictMap = self.mapValues(state, self.whole)
         # Converges the mapped values from mapValues
-        self.valueIteration(dictMap)
+        dictMap = self.valueIteration(dictMap)
+        #self.gridPrint(state, dictMap)     # Print grid in terminal
         # Makes a move by calling findMax function that returns the best direction to move
-        #api.legalActions(state)
-        #print self.utilityDict
-        #print self.findMax(state, pac, dictMap), "\n"
         return api.makeMove(self.findMax(pac, dictMap)[0], legal)
 
     # Returns a list of tuples that are coordinates of the whole map 
@@ -106,12 +106,10 @@ class MDPAgent(Agent):
         for ghost in self.ghosts:
             for i in range(int(ghost[0]-self.avoidRadius), int(ghost[0]+self.avoidRadius+1)):
                 for j in range(int(ghost[1]-self.avoidRadius), int(ghost[1]+self.avoidRadius+1)):
-                    if (i, j) not in self.walls or not ghost: self.radiusList.append((i, j))
-        #print self.radiusList
+                    if (int(i), int(j)) not in self.walls or not ghost: self.radiusList.append((int(i), int(j)))
 
     # Updates the utility values of all the ghosts depending on their states
     def ghostValue(self, coord):
-        util = 0
         for pair in self.stateTimes:
             if pair[1] == 0: util = self.ghostReward
             else: util = (pair[1] - 20) / 2.5
@@ -121,7 +119,8 @@ class MDPAgent(Agent):
     def mapValues(self, state, map1):
         dictMap = {}
         for i in map1:
-            if i in self.ghosts: dictMap[i] = self.ghostValue(i) # TODO: use ghostValues here
+            if i == api.whereAmI(state): dictMap[i] = 0
+            elif i in self.ghosts: dictMap[i] = self.ghostValue(i)
             elif i in self.radiusList: dictMap[i] = self.ghostValue(i) / 2
             elif i in self.food: dictMap[i] = self.foodReward
             elif i in self.capsules: dictMap[i] = self.capsuleReward
@@ -182,7 +181,7 @@ class MDPAgent(Agent):
             for i in self.whole:
                 if i not in self.walls + self.food + self.ghosts + self.capsules:
                     dictMap[i] = self.emptyReward + (self.discountFactor * self.findMax(i, oldMap)[1])
-        #self.gridPrint(state, dictMap)
+        return dictMap
 
     # Prints the map in the terminal with utility values in empty spaces
     def gridPrint(self, state, map):
@@ -194,9 +193,9 @@ class MDPAgent(Agent):
                 elif (row == 10 and col == 0): out += "[003]"
                 elif (row == 10 and col == 19): out += "[004]"
                 elif (col, row) in self.walls: out += "[###]"
-                elif (col, row) in api.ghosts(state): out += "  X  "
-                elif (col, row) in api.food(state): out += "  .  "
-                elif (col, row) in api.capsules(state): out += "  o  "
+                elif (col, row) in self.ghosts: out += "  X  "
+                #elif (col, row) in self.food: out += "  .  "
+                elif (col, row) in self.capsules: out += "  o  "
                 elif (col, row) == api.whereAmI(state): out += "  @  "
                 else: out += "{: 5.2f}".format(map[(col, row)])
             out += "\n"
