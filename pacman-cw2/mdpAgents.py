@@ -47,7 +47,7 @@ class MDPAgent(Agent):
         # Rewards
         self.foodReward = 1         # Reward for food
         self.capsuleReward = 1      # Reward for capsule
-        self.ghostReward = -4       # Reward for ghost
+        self.ghostReward = -2       # Reward for ghost
         # Init lists
         # FIXED
         self.whole = []             # List of coordinates of the whole map
@@ -65,17 +65,18 @@ class MDPAgent(Agent):
         self.walls = api.walls(state)
         self.whole = self.wholeMap()
         # Avoidance radius of ghosts depends on size of map. Smaller map = smaller radius
-        self.avoidRadius = int((min(self.walls[-1]) - 2) / 4)
+        self.avoidRadius = 1#int((min(self.walls[-1]) - 2) / 4)
 
     # Gets pacman to make a move
-    # Updates values of states at every call
-    # Calls value iteration after mapping
+    # First, Updates values of states at every call (food, capsules, ghosts etc.)
+    # Then calls value iteration after mapping initial values
     # Returns: A direction to move in (with 80% success) 
     def getAction(self, state):
         # Get the actions we can try, and remove "STOP" if that is one of them.
         legal = api.legalActions(state)
         if Directions.STOP in legal:
             legal.remove(Directions.STOP)
+
         # Updates new list of entities with new game state
         self.food = api.food(state)         
         self.capsules = api.capsules(state)
@@ -83,15 +84,20 @@ class MDPAgent(Agent):
         self.stateTimes = api.ghostStatesWithTimes(state)
         self.ghostRadius()
         pac = api.whereAmI(state)
+
         # Updates map with new info e.g. eaten food / capsules / ghosts
         dictMap = self.mapValues(state, self.whole)
-        # Converges the mapped values from mapValues
-        dictMap = self.valueIteration(dictMap)
-        #self.gridPrint(state, dictMap)     # Print grid in terminal
+        # Converges the mapped values from mapValues using Bellman update
+        self.valueIteration(dictMap)
+
+        # ---- PRINTS FOR DEBUG ----
+        #self.gridPrint(state, dictMap)      # Print grid in terminal
+        #print sorted(dictMap.iteritems())  # Print dictionary of full util values
+
         # Makes a move by calling findMax function that returns the best direction to move
         return api.makeMove(self.findMax(pac, dictMap)[0], legal)
 
-    # Returns a list of tuples that are coordinates of the whole map 
+    # Returns a list of tuples representing coordinates of the whole map 
     # Called once at initialization
     def wholeMap(self):
         ret = []
@@ -100,44 +106,46 @@ class MDPAgent(Agent):
                 ret.append((i, j))
         return ret
 
-    # Creates a list of all locations within a certain radius of all ghosts
+    # Creates a list of all new locations within the avoidRadius of all ghosts
+    # i.e. a square ring area with side lengths avoidRadius + 1 not including ghost coords
     def ghostRadius(self):
-        self.radiusList = []
+        self.radiusList = []        # reset list of new radius
         for ghost in self.ghosts:
             for i in range(int(ghost[0]-self.avoidRadius), int(ghost[0]+self.avoidRadius+1)):
                 for j in range(int(ghost[1]-self.avoidRadius), int(ghost[1]+self.avoidRadius+1)):
+                    # If rounded radius coord around ghost (because scared ghosts move in half steps)
+                    # is not diagonal to ghosts and is not a wall or the ghost itself, add to radiusList
                     if (int(i), int(j)) not in self.walls or not ghost: self.radiusList.append((int(i), int(j)))
 
     # Updates the utility values of all the ghosts depending on their states
+    # Returns: utility value of a specified ghost at a coordinate
     def ghostValue(self, coord):
         for pair in self.stateTimes:
-            if pair[1] == 0: util = self.ghostReward
-            else: util = (pair[1] - 20) / 2.5
+            if pair[1] == 0: util = self.ghostReward    # i.e. not scared = default value
+            else: util = (pair[1] - 20) / 2.5           # function mapping scared time left to ranges 8 to -8
         return util
 
     # Creates a dictionary of coordinate - utility value pairs
+    # Returns: A dictionary mapping coordinate values to utility values
     def mapValues(self, state, map1):
         dictMap = {}
         for i in map1:
-            if i == api.whereAmI(state): dictMap[i] = 0
-            elif i in self.ghosts: dictMap[i] = self.ghostValue(i)
-            elif i in self.radiusList: dictMap[i] = self.ghostValue(i) / 2
-            elif i in self.food: dictMap[i] = self.foodReward
-            elif i in self.capsules: dictMap[i] = self.capsuleReward
-            elif i in self.walls: dictMap[i] = 0
-            else: dictMap[i] = self.emptyReward
+            if i in self.ghosts: dictMap[i] = self.ghostValue(i)            # Util of ghost calculated using ghostValue
+            elif i in self.radiusList: dictMap[i] = self.ghostValue(i) / 2  # Util of cells near ghosts = half of ghostValue
+            elif i in self.food: dictMap[i] = self.foodReward               # Util of food = foodReward
+            elif i in self.capsules: dictMap[i] = self.capsuleReward        # Util of capsules = capsuleReward
+            elif i in self.walls: dictMap[i] = 0                            # Util of walls = 0
+            else: dictMap[i] = self.emptyReward                             # Util of empty space = default reward
         return dictMap
     
     # Find adjacent coords of current
-    # Returns max util of states using the Bellman equation
+    # Returns: Max util of states using the Bellman equation
     def findMax(self, coord, dictMap):
         # Dictionary of utilities in each direction
         self.utilityDict = {Directions.NORTH: 0.0, Directions.SOUTH: 0.0, Directions.EAST: 0.0, Directions.WEST: 0.0}
-        # adjacent coords in directions
-        self.utilityDict[Directions.NORTH] = self.setUtil(Directions.NORTH, coord, dictMap)
-        self.utilityDict[Directions.SOUTH] = self.setUtil(Directions.SOUTH, coord, dictMap)
-        self.utilityDict[Directions.EAST] = self.setUtil(Directions.EAST, coord, dictMap)
-        self.utilityDict[Directions.WEST] = self.setUtil(Directions.WEST, coord, dictMap)
+        # adjacent coords in all 4 directions in dictionary
+        for i in self.utilityDict:
+            self.utilityDict[i] = self.setUtil(i, coord, dictMap)
 
         return max(self.utilityDict.iteritems(), key = lambda x: x[1])
     
@@ -160,26 +168,28 @@ class MDPAgent(Agent):
             util = (self.direcProb * dictMap[dirDict[direc]])
         else:
             util = (self.direcProb * dictMap[coord])
-        # LEFT 
+        # LEFT perpendicular
         if dirDict[Directions.LEFT[direc]] not in self.walls:
             util += (((1 - self.direcProb)/2) * dictMap[dirDict[Directions.LEFT[direc]]])
-        else:
+        else: # stay in place
             util += (((1 - self.direcProb)/2) * dictMap[coord])
-        # RIGHT
+        # RIGHT perpendicular
         if dirDict[Directions.RIGHT[direc]] not in self.walls:
             util += (((1 - self.direcProb)/2) * dictMap[dirDict[Directions.RIGHT[direc]]])
-        else:
+        else: # stay in place
             util += (((1 - self.direcProb)/2) * dictMap[coord])
 
         return util
 
     # Converges util values performing Bellman update
+    # Returns: new dictionary mapping with converged values from Bellman update
     def valueIteration(self, dictMap):
         oldMap = None
         while dictMap != oldMap:
             oldMap = dictMap.copy()
-            for i in self.whole:
-                if i not in self.walls + self.food + self.ghosts + self.capsules:
+            for i in self.whole:    # Iterate through created map
+                if i not in self.walls + self.food + self.ghosts + self.radiusList + self.capsules:
+                    # Bellman update
                     dictMap[i] = self.emptyReward + (self.discountFactor * self.findMax(i, oldMap)[1])
         return dictMap
 
@@ -188,16 +198,16 @@ class MDPAgent(Agent):
         out = ""
         for row in reversed(range(self.walls[-1][1]+1)):
             for col in range(self.walls[-1][0]+1):
-                if (row == 0 and col == 0): out += "[001]"
-                elif (row == 0 and col == 19): out += "[002]"
-                elif (row == 10 and col == 0): out += "[003]"
-                elif (row == 10 and col == 19): out += "[004]"
-                elif (col, row) in self.walls: out += "[###]"
-                elif (col, row) in self.ghosts: out += "  X  "
-                #elif (col, row) in self.food: out += "  .  "
-                elif (col, row) in self.capsules: out += "  o  "
-                elif (col, row) == api.whereAmI(state): out += "  @  "
-                else: out += "{: 5.2f}".format(map[(col, row)])
-            out += "\n"
+                if (row == 0 and col == 0): out += "[001]"              # Bottom Left corner
+                elif (row == 0 and col == 19): out += "[002]"           # Bottom Right corner
+                elif (row == 10 and col == 0): out += "[003]"           # Top Left corner
+                elif (row == 10 and col == 19): out += "[004]"          # Top right corner
+                elif (col, row) in self.walls: out += "[###]"           # Wall
+                elif (col, row) in self.ghosts: out += "  X  "          # Ghost
+                elif (col, row) in self.food: out += "  .  "            # Food
+                elif (col, row) in self.capsules: out += "  o  "        # Capsule
+                elif (col, row) == api.whereAmI(state): out += "  @  "  # Pacman
+                else: out += "{: 5.2f}".format(map[(col, row)])         # Empty space with util value
+            out += "\n"     # Next row
         print out
             
